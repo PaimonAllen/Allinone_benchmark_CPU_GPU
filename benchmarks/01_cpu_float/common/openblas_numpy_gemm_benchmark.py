@@ -459,6 +459,10 @@ def write_report(
         "selected_env.json": "selected conda environment state used for this run",
         "windows_cpu_info.json": "Windows CPU metadata from CIM",
         "windows_os_info.json": "Windows OS metadata from CIM",
+        "linux_cpu_info.txt": "Linux CPU metadata from lscpu",
+        "linux_uname.txt": "Linux kernel metadata from uname",
+        "linux_os_release.txt": "Linux OS release metadata",
+        "linux_numactl_hardware.txt": "Linux NUMA topology from numactl",
     }
     for filename, description in optional_outputs.items():
         if (path.parent / filename).exists():

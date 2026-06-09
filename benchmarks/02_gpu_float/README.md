@@ -11,10 +11,15 @@ Typical contents:
 - Notes distinguishing Tensor Core paths, CUDA Core paths, and software or
   fallback paths.
 
-Current Windows implementation:
+Current implementations:
 
 - `Windows/build_cutlass_3_8_0.ps1` builds the local CUTLASS 3.8.0 profiler
   for the FP32/TF32 GEMM subset.
 - `Windows/run_cutlass_3_8_0_benchmark.ps1` runs that profiler and saves raw
   logs, CSV results, environment metadata, command lines, and a short Markdown
   report.
+- `Linux/01_build_cutlass_4_5_1.sh` builds the local CUTLASS 4.5.1 profiler for
+  Linux with CUDA architecture and supported FP16/FP32/FP64/TF32/FP8/FP4 kernel
+  defaults inferred from `nvidia-smi` when available.
+- `Linux/02_run_cutlass_4_5_1_benchmark.sh` runs that profiler and saves raw logs,
+  CSV results, environment metadata, command lines, and a short Markdown report.

@@ -5,7 +5,7 @@ Configure and build CUTLASS 3.8.0 on Windows.
 .DESCRIPTION
 Builds the CUTLASS profiler from the local cutlass-3.8.0 source tree using
 Visual Studio 2022, CUDA Toolkit, and CMake. Defaults are tuned for this
-machine's RTX 4070 Ti (SM 89).
+machine's RTX 4070 Ti (SM 89) and cover the local GEMM float benchmark set.
 #>
 
 [CmdletBinding()]
@@ -20,7 +20,7 @@ param(
     [ValidateSet("gemm", "all", "conv2d", "conv3d", "rank_k", "rank_2k", "trmm", "symm")]
     [string]$Operations = "gemm",
     [AllowEmptyString()]
-    [string]$Kernels = "sgemm,tf32gemm",
+    [string]$Kernels = "sgemm,tf32gemm,16816,dgemm,e4m3,e5m2,e2m1",
     [int]$Parallel = 23,
     [switch]$Clean,
     [switch]$ConfigureOnly,
@@ -363,28 +363,30 @@ if (-not $ConfigureOnly) {
     )
     Invoke-VsDevCommand -Arguments $buildArgs -Title "Build $Target"
 
-    $expectedProfiler = Join-Path $buildPath "tools\profiler\$Config\cutlass_profiler.exe"
-    if (Test-Path -LiteralPath $expectedProfiler) {
-        Write-Host ""
-        Write-Host "Built profiler: $expectedProfiler"
-        Add-Content -Path $script:LogFile -Encoding UTF8 -Value @("", "Built profiler: $expectedProfiler")
+    if (-not $DryRun) {
+        $expectedProfiler = Join-Path $buildPath "tools\profiler\$Config\cutlass_profiler.exe"
+        if (Test-Path -LiteralPath $expectedProfiler) {
+            Write-Host ""
+            Write-Host "Built profiler: $expectedProfiler"
+            Add-Content -Path $script:LogFile -Encoding UTF8 -Value @("", "Built profiler: $expectedProfiler")
 
-        $profilerDir = Split-Path -Parent $expectedProfiler
-        $libraryDllDir = Join-Path $buildPath "tools\library\$Config"
-        if (Test-Path -LiteralPath $libraryDllDir) {
-            $runtimeDlls = Get-ChildItem -LiteralPath $libraryDllDir -Filter "*.dll"
-            foreach ($dll in $runtimeDlls) {
-                Copy-Item -LiteralPath $dll.FullName -Destination $profilerDir -Force
+            $profilerDir = Split-Path -Parent $expectedProfiler
+            $libraryDllDir = Join-Path $buildPath "tools\library\$Config"
+            if (Test-Path -LiteralPath $libraryDllDir) {
+                $runtimeDlls = Get-ChildItem -LiteralPath $libraryDllDir -Filter "*.dll"
+                foreach ($dll in $runtimeDlls) {
+                    Copy-Item -LiteralPath $dll.FullName -Destination $profilerDir -Force
+                }
+                Write-Host "Copied runtime DLLs: $($runtimeDlls.Count) from $libraryDllDir to $profilerDir"
+                Add-Content -Path $script:LogFile -Encoding UTF8 -Value "Copied runtime DLLs: $($runtimeDlls.Count) from $libraryDllDir to $profilerDir"
             }
-            Write-Host "Copied runtime DLLs: $($runtimeDlls.Count) from $libraryDllDir to $profilerDir"
-            Add-Content -Path $script:LogFile -Encoding UTF8 -Value "Copied runtime DLLs: $($runtimeDlls.Count) from $libraryDllDir to $profilerDir"
+        } else {
+            Write-Host ""
+            Write-Host "Build completed, but expected profiler path was not found:"
+            Write-Host $expectedProfiler
+            Write-Host "Search the build directory for cutlass_profiler.exe if the generator used a different output path."
+            Add-Content -Path $script:LogFile -Encoding UTF8 -Value @("", "Expected profiler not found: $expectedProfiler")
         }
-    } else {
-        Write-Host ""
-        Write-Host "Build completed, but expected profiler path was not found:"
-        Write-Host $expectedProfiler
-        Write-Host "Search the build directory for cutlass_profiler.exe if the generator used a different output path."
-        Add-Content -Path $script:LogFile -Encoding UTF8 -Value @("", "Expected profiler not found: $expectedProfiler")
     }
 }
 

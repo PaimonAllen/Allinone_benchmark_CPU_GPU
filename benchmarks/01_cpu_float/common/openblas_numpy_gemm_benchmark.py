@@ -292,6 +292,28 @@ def markdown_table(headers: list[str], rows: list[list[Any]]) -> list[str]:
     return lines
 
 
+def provider_short_name(provider: str) -> str:
+    mapping = {
+        "blas": "BLAS",
+        "numpy-matmul-fallback": "NP",
+        "numpy-longdouble-fallback": "LD",
+        "numpy-longdouble": "LD",
+        "unsupported": "N/A",
+    }
+    return mapping.get(provider, provider)
+
+
+def provider_note(provider: str) -> str:
+    mapping = {
+        "blas": "BLAS: NumPy dispatches to the linked BLAS GEMM path.",
+        "numpy-matmul-fallback": "NP: NumPy matmul fallback path, not a standard BLAS GEMM.",
+        "numpy-longdouble-fallback": "LD: NumPy longdouble fallback path.",
+        "numpy-longdouble": "LD: NumPy longdouble capability check.",
+        "unsupported": "N/A: Not supported by this CPU/NumPy/OpenBLAS path.",
+    }
+    return mapping.get(provider, provider)
+
+
 def write_report(
     path: Path,
     metadata: dict[str, Any],
@@ -358,11 +380,12 @@ def write_report(
     lines.append("## Result Summary")
     if summary_rows:
         table_rows = []
+        providers_used: set[str] = set()
         for row in summary_rows:
+            providers_used.add(str(row["provider"]))
             table_rows.append(
                 [
-                    row["backend"],
-                    row["provider"],
+                    provider_short_name(str(row["provider"])),
                     row["precision"],
                     row["matrix_size"],
                     row["threads"],
@@ -376,7 +399,6 @@ def write_report(
         lines.extend(
             markdown_table(
                 [
-                    "backend",
                     "provider",
                     "precision",
                     "matrix_size",
@@ -390,12 +412,16 @@ def write_report(
                 table_rows,
             )
         )
+        if providers_used:
+            lines.append("")
+            lines.append("Provider notes: " + "; ".join(provider_note(provider) for provider in sorted(providers_used)))
     else:
         lines.append("No benchmark rows were generated.")
     lines.append("")
 
     unsupported_rows = metadata.get("unsupported_cases", [])
     if unsupported_rows:
+        unsupported_providers = sorted({str(row.get("provider", "")) for row in unsupported_rows if row.get("provider", "")})
         lines.append("## Unsupported / Skipped Cases")
         lines.extend(
             markdown_table(
@@ -405,13 +431,19 @@ def write_report(
                         row.get("precision", ""),
                         row.get("matrix_size", ""),
                         row.get("threads", ""),
-                        row.get("provider", ""),
+                        provider_short_name(str(row.get("provider", ""))),
                         row.get("reason", ""),
                     ]
                     for row in unsupported_rows
                 ],
             )
         )
+        if unsupported_providers:
+            lines.append("")
+            lines.append(
+                "Provider notes: "
+                + "; ".join(provider_note(provider) for provider in unsupported_providers)
+            )
         lines.append("")
 
     lines.append("## Output Files")

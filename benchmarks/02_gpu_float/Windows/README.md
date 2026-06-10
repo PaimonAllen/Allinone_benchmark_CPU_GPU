@@ -53,6 +53,9 @@ Useful options:
 ```
 
 Logs are written to `logs/`.
+If the build fails, the script prints the original failure, the log path, and the
+last 80 log lines. Check the newest `logs/cutlass_3_8_0_*.log` file for the
+underlying CMake, MSBuild, NVCC, or Visual Studio error.
 
 ## Run the local CUTLASS GEMM benchmark
 

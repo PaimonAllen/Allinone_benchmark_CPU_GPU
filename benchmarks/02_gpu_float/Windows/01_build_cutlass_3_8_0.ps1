@@ -201,6 +201,55 @@ function Clear-CutlassTempDir {
     }
 }
 
+function Write-BuildFailureDiagnostics {
+    param(
+        [Parameter(Mandatory = $true)][System.Management.Automation.ErrorRecord]$ErrorRecord,
+        [string]$LogFile
+    )
+
+    $message = $ErrorRecord.Exception.Message
+    $position = if ($ErrorRecord.InvocationInfo) { $ErrorRecord.InvocationInfo.PositionMessage } else { "" }
+    $stackTrace = if ($ErrorRecord.ScriptStackTrace) { $ErrorRecord.ScriptStackTrace } else { "" }
+    $logTail = @()
+    if ($LogFile -and (Test-Path -LiteralPath $LogFile)) {
+        $logTail = Get-Content -LiteralPath $LogFile -Tail 80 -ErrorAction SilentlyContinue
+    }
+
+    $diagnostics = @(
+        "",
+        "==> Build failed",
+        "Message: $message",
+        "FullyQualifiedErrorId: $($ErrorRecord.FullyQualifiedErrorId)",
+        "Log: $LogFile"
+    )
+    if ($position) {
+        $diagnostics += @("", "Position:", $position)
+    }
+    if ($stackTrace) {
+        $diagnostics += @("", "Script stack trace:", $stackTrace)
+    }
+    if ($logTail.Count -gt 0) {
+        $diagnostics += @("", "Last 80 log lines:")
+        $diagnostics += $logTail
+    }
+
+    Write-Host ""
+    Write-Host "CUTLASS build failed." -ForegroundColor Red
+    Write-Host "Reason: $message" -ForegroundColor Red
+    if ($LogFile) {
+        Write-Host "Log: $LogFile"
+    }
+    if ($logTail.Count -gt 0) {
+        Write-Host ""
+        Write-Host "Last 80 log lines:"
+        $logTail | ForEach-Object { Write-Host $_ }
+    }
+
+    if ($LogFile) {
+        Add-Content -Path $LogFile -Encoding UTF8 -Value $diagnostics
+    }
+}
+
 $sourcePath = Resolve-ExistingPath -Path $SourceDir -Description "CUTLASS source directory"
 if (-not $BuildDir) {
     $BuildDir = Join-Path $env:SystemDrive "cutlass_build\cutlass_3_8_0"
@@ -263,12 +312,18 @@ Set-Content -Path $script:LogFile -Encoding UTF8 -Value @(
 )
 
 trap {
+    $failure = $_
+    try {
+        Write-BuildFailureDiagnostics -ErrorRecord $failure -LogFile $script:LogFile
+    } catch {
+        Write-Warning "Failed to write build diagnostics: $($_.Exception.Message)"
+    }
     try {
         Clear-CutlassTempDir -Path $TempDir
     } catch {
         Write-Warning "Temp cleanup after failure also failed: $($_.Exception.Message)"
     }
-    throw
+    throw "CUTLASS build failed: $($failure.Exception.Message). See log: $script:LogFile"
 }
 
 if ($TempDir) {

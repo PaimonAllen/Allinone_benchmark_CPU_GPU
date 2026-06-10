@@ -71,7 +71,8 @@ Defaults:
 Useful options:
 
 ```powershell
-.\02_run_stream_benchmark.ps1 -Threads 1,8,32
+$maxThreads = (Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+.\02_run_stream_benchmark.ps1 -Threads 1,8,$maxThreads
 .\02_run_stream_benchmark.ps1 -RepeatCount 3
 .\02_run_stream_benchmark.ps1 -Binary .\build\stream_double_n100000000_t20_omp.exe
 .\02_run_stream_benchmark.ps1 -Quiet

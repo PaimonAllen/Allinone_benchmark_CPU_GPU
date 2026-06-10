@@ -68,7 +68,8 @@ Useful options:
 ./02_run_openblas_numpy_benchmark.sh --python /opt/conda/bin/python
 ./02_run_openblas_numpy_benchmark.sh --precisions FP32,FP64
 ./02_run_openblas_numpy_benchmark.sh --precisions ALL_KNOWN
-./02_run_openblas_numpy_benchmark.sh --threads 1,8,36
+max_threads="$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc)"
+./02_run_openblas_numpy_benchmark.sh --threads "1,8,$max_threads"
 ./02_run_openblas_numpy_benchmark.sh --allow-any-blas
 ./02_run_openblas_numpy_benchmark.sh --allow-user-site
 ./02_run_openblas_numpy_benchmark.sh --dry-run

@@ -67,6 +67,20 @@ function Get-DefaultThreadCounts {
     return $result
 }
 
+function Get-LogicalCpuCount {
+    $logicalCpus = [Environment]::ProcessorCount
+    try {
+        $processorInfo = @(Get-CimInstance Win32_Processor)
+        $logicalFromCim = ($processorInfo | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+        if ($logicalFromCim -gt 0) {
+            $logicalCpus = [int]$logicalFromCim
+        }
+    } catch {
+        Write-Warning "Could not query logical processor count from CIM: $($_.Exception.Message)"
+    }
+    return $logicalCpus
+}
+
 function ConvertFrom-ThreadCsv {
     param([Parameter(Mandatory = $true)][string]$Text)
 
@@ -166,7 +180,7 @@ if (-not (Test-Path -LiteralPath $binaryFullPath -PathType Leaf)) {
     throw "STREAM binary not found: $binaryFullPath"
 }
 
-$logicalCpus = [Environment]::ProcessorCount
+$logicalCpus = Get-LogicalCpuCount
 $threadValues = if ($Threads.Count -gt 0) { ConvertFrom-ThreadCsv -Text ($Threads -join ",") } else { Get-DefaultThreadCounts -LogicalCpus $logicalCpus }
 
 $outputRootFullPath = Resolve-InputPath -Path $OutputRoot

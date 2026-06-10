@@ -68,7 +68,8 @@ Defaults:
 Useful options:
 
 ```bash
-./02_run_stream_benchmark.sh --threads 1,8,36
+max_threads="$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc)"
+./02_run_stream_benchmark.sh --threads "1,8,$max_threads"
 ./02_run_stream_benchmark.sh --repeat-count 3
 ./02_run_stream_benchmark.sh --interleave-all
 ./02_run_stream_benchmark.sh --numactl-args "--cpunodebind=0 --membind=0"

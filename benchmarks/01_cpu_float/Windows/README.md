@@ -70,7 +70,8 @@ Useful options:
 .\02_run_openblas_numpy_benchmark.ps1 -Precisions ALL
 .\02_run_openblas_numpy_benchmark.ps1 -Precisions FP32
 .\02_run_openblas_numpy_benchmark.ps1 -Precisions FP64
-.\02_run_openblas_numpy_benchmark.ps1 -Threads 1,8,32
+$maxThreads = (Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+.\02_run_openblas_numpy_benchmark.ps1 -Threads 1,8,$maxThreads
 .\02_run_openblas_numpy_benchmark.ps1 -RepeatCount 5 -WarmupIterations 2 -ProfilingIterations 3
 .\02_run_openblas_numpy_benchmark.ps1 -CondaEnv cudadev
 .\02_run_openblas_numpy_benchmark.ps1 -DryRun

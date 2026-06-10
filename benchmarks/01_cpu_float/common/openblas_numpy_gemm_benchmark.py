@@ -49,6 +49,14 @@ def parse_csv_ints(value: str, name: str) -> list[int]:
     return items
 
 
+def default_thread_counts(cpu_count: int) -> list[int]:
+    out: list[int] = []
+    for item in (1, 8, cpu_count):
+        if item > 0 and item <= cpu_count and item not in out:
+            out.append(item)
+    return out or [max(cpu_count, 1)]
+
+
 def parse_precisions(value: str) -> list[str]:
     aliases = {
         "ALL": ["FP16", "FP32", "FP64", "FP128"],
@@ -492,7 +500,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="FP32,FP64",
         help="Comma-separated precisions. Aliases: ALL=FP16,FP32,FP64,FP128; ALL_KNOWN also records FP4/FP8 unsupported cases.",
     )
-    parser.add_argument("--threads", default="1,2,4,8,16,24", help="Comma-separated BLAS thread counts.")
+    parser.add_argument("--threads", default="", help="Comma-separated BLAS thread counts. Default: 1,8,<logical CPU count>.")
     parser.add_argument("--repeat-count", type=int, default=3, help="Measured repeats per case.")
     parser.add_argument("--warmup-iterations", type=int, default=1, help="Untimed matmul iterations before each repeat.")
     parser.add_argument("--profiling-iterations", type=int, default=3, help="Timed matmul iterations per repeat.")
@@ -507,7 +515,11 @@ def main() -> int:
     sizes = parse_csv_ints(args.sizes, "sizes")
     fallback_sizes = parse_csv_ints(args.fallback_sizes, "fallback-sizes")
     precisions = parse_precisions(args.precisions)
-    requested_threads = parse_csv_ints(args.threads, "threads")
+    cpu_count = os.cpu_count() or 1
+    if args.threads.strip():
+        requested_threads = parse_csv_ints(args.threads, "threads")
+    else:
+        requested_threads = default_thread_counts(cpu_count)
     if args.repeat_count <= 0:
         raise SystemExit("--repeat-count must be positive")
     if args.warmup_iterations < 0:
@@ -569,7 +581,6 @@ def main() -> int:
 
     import numpy as np
 
-    cpu_count = os.cpu_count() or 1
     threads = [thread for thread in requested_threads if thread <= cpu_count]
     skipped_threads = [thread for thread in requested_threads if thread > cpu_count]
     if not threads:

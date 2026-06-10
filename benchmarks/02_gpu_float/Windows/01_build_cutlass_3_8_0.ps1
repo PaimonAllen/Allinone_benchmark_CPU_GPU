@@ -34,6 +34,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$script:LogFile = $null
+$script:VsDevCmd = $null
 
 $scriptRoot = if ($PSScriptRoot) {
     $PSScriptRoot
@@ -192,7 +194,9 @@ function Clear-CutlassTempDir {
         Write-Host ""
         Write-Host "==> Cleaning temp directory"
         Write-Host $tempFullPath
-        Add-Content -Path $script:LogFile -Encoding UTF8 -Value @("", "==> Cleaning temp directory", $tempFullPath)
+        if ($script:LogFile) {
+            Add-Content -Path $script:LogFile -Encoding UTF8 -Value @("", "==> Cleaning temp directory", $tempFullPath)
+        }
         Remove-DirectoryWithRetry -Path $tempFullPath
     }
 
@@ -326,7 +330,12 @@ trap {
     } catch {
         Write-Warning "Temp cleanup after failure also failed: $($_.Exception.Message)"
     }
-    throw "CUTLASS build failed: $($failure.Exception.Message). See log: $script:LogFile"
+
+    if ($script:LogFile) {
+        throw "CUTLASS build failed: $($failure.Exception.Message). See log: $script:LogFile"
+    } else {
+        throw "CUTLASS build failed before the build log was initialized: $($failure.Exception.Message)"
+    }
 }
 
 if ($TempDir) {

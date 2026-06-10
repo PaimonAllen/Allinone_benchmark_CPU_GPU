@@ -3,18 +3,33 @@
 This directory contains Linux-specific helper scripts for GPU floating-point
 benchmarks.
 
+## Script order
+
+| order | script | purpose |
+|---:|---|---|
+| 00 | `00_git_clone_cutlass_4_5_1.sh` | Clone or update the external CUTLASS 4.5.1 source tree. |
+| 01 | `01_build_cutlass_4_5_1.sh` | Configure and build CUTLASS 4.5.1. |
+| 02 | `02_run_cutlass_4_5_1_benchmark.sh` | Run the CUTLASS GEMM benchmark and write reports. |
+
 ## CUTLASS 4.5.1
 
 Build the local CUTLASS profiler:
 
 ```bash
-chmod +x ./01_build_cutlass_4_5_1.sh ./02_run_cutlass_4_5_1_benchmark.sh
+chmod +x ./00_git_clone_cutlass_4_5_1.sh ./01_build_cutlass_4_5_1.sh ./02_run_cutlass_4_5_1_benchmark.sh
+./00_git_clone_cutlass_4_5_1.sh
 ./01_build_cutlass_4_5_1.sh
 ```
 
 The default source directory is `./cutlass-4.5.1`, the default build directory
 is `./cutlass-4.5.1/build`, and the default CUDA architecture is detected from
 `nvidia-smi`. If detection is unavailable, the script falls back to `89`.
+
+The clone script is safe to run repeatedly. It clones
+`https://github.com/NVIDIA/cutlass.git` at tag `v4.5.1` only when the source
+directory is missing or empty. Use `--update` to fetch and check out the tag
+again, `--force` to replace an invalid non-empty source directory, and
+`--dry-run` to preview git commands.
 
 The build script defaults to `--operations gemm`, `--kernels auto`, and a
 parallelism level from `CMAKE_BUILD_PARALLEL_LEVEL` or the local CPU count.

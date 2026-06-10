@@ -250,6 +250,9 @@ function Write-BuildFailureDiagnostics {
     }
 }
 
+if (-not (Test-Path -LiteralPath $SourceDir)) {
+    throw "CUTLASS source directory not found: $SourceDir. Run .\00_git_clone_cutlass_3_8_0.ps1 first."
+}
 $sourcePath = Resolve-ExistingPath -Path $SourceDir -Description "CUTLASS source directory"
 if (-not $BuildDir) {
     $BuildDir = Join-Path $env:SystemDrive "cutlass_build\cutlass_3_8_0"
@@ -258,10 +261,10 @@ if (-not $BuildDir) {
 $sourceCMake = Join-Path $sourcePath "CMakeLists.txt"
 $profilerCMake = Join-Path $sourcePath "tools\profiler\CMakeLists.txt"
 if (-not (Test-Path -LiteralPath $sourceCMake)) {
-    throw "CUTLASS CMakeLists.txt not found: $sourceCMake"
+    throw "CUTLASS CMakeLists.txt not found: $sourceCMake. Run .\00_git_clone_cutlass_3_8_0.ps1 -Update, or fix the source directory."
 }
 if (-not (Test-Path -LiteralPath $profilerCMake)) {
-    throw "CUTLASS profiler CMakeLists.txt not found: $profilerCMake"
+    throw "CUTLASS profiler CMakeLists.txt not found: $profilerCMake. Run .\00_git_clone_cutlass_3_8_0.ps1 -Update, or fix the source directory."
 }
 
 $cmakePath = Test-CommandExists -Name "cmake"

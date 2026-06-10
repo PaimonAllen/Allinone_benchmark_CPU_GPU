@@ -297,11 +297,11 @@ if [[ -z "$generator" ]]; then
     fi
 fi
 
-[[ -d "$source_dir" ]] || die "CUTLASS source directory not found: $source_dir"
+[[ -d "$source_dir" ]] || die "CUTLASS source directory not found: $source_dir. Run ./00_git_clone_cutlass_4_5_1.sh first."
 source_path="$(real_path_m "$source_dir")"
 build_path="$(real_path_m "$build_dir")"
-[[ -f "$source_path/CMakeLists.txt" ]] || die "CUTLASS CMakeLists.txt not found: $source_path/CMakeLists.txt"
-[[ -f "$source_path/tools/profiler/CMakeLists.txt" ]] || die "CUTLASS profiler CMakeLists.txt not found: $source_path/tools/profiler/CMakeLists.txt"
+[[ -f "$source_path/CMakeLists.txt" ]] || die "CUTLASS CMakeLists.txt not found: $source_path/CMakeLists.txt. Run ./00_git_clone_cutlass_4_5_1.sh --update, or fix the source directory."
+[[ -f "$source_path/tools/profiler/CMakeLists.txt" ]] || die "CUTLASS profiler CMakeLists.txt not found: $source_path/tools/profiler/CMakeLists.txt. Run ./00_git_clone_cutlass_4_5_1.sh --update, or fix the source directory."
 
 cmake_path="$(command -v cmake || true)"
 [[ -n "$cmake_path" ]] || die "Required command not found in PATH: cmake"

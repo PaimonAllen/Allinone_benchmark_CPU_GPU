@@ -7,6 +7,7 @@ benchmarks.
 
 | order | script | purpose |
 |---:|---|---|
+| 00 | `00_git_clone_cutlass_3_8_0.ps1` | Clone or update the external CUTLASS 3.8.0 source tree. |
 | 01 | `01_build_cutlass_3_8_0.ps1` | Configure and build CUTLASS 3.8.0. |
 | 02 | `02_run_cutlass_3_8_0_benchmark.ps1` | Run the CUTLASS GEMM benchmark and write reports. |
 
@@ -16,11 +17,18 @@ Build the CUTLASS profiler for the local RTX 4070 Ti class GPU:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
+.\00_git_clone_cutlass_3_8_0.ps1
 .\01_build_cutlass_3_8_0.ps1
 ```
 
 The default source directory is `.\cutlass-3.8.0`, the default build directory is
 `C:\cutlass_build\cutlass_3_8_0`, and the default CUDA architecture is `89`.
+
+The clone script is safe to run repeatedly. It clones
+`https://github.com/NVIDIA/cutlass.git` at tag `v3.8.0` only when the source
+directory is missing or empty. Use `-Update` to fetch and check out the tag
+again, `-Force` to replace an invalid non-empty source directory, and `-DryRun`
+to preview git commands.
 
 The build script defaults to `-Operations gemm`,
 `-Kernels sgemm,tf32gemm,16816,dgemm,e4m3,e5m2,e2m1`, `-Parallel 23`, and
